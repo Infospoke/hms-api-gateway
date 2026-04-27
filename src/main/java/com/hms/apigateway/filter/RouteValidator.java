@@ -17,7 +17,7 @@ public class RouteValidator {
 	private static final Logger LOGGER = LogManager.getLogger(RouteValidator.class);
     public static final List<String> openApiEndpoints = List.of(
             "/hms/login/user-login",
-            "/hms/login/forgot-password");
+            "/hms/login/forgot-password/**");
  
     private  List<PathPattern> pathPatterns;
     public RouteValidator() {
