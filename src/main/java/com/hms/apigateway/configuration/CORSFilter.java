@@ -1,5 +1,8 @@
 package com.hms.apigateway.configuration;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -15,27 +18,34 @@ import reactor.core.publisher.Mono;
 @Order(-1)
 public class CORSFilter implements WebFilter {
 
-	private static final String ALLOWED_ORIGIN = "http://localhost:4200";
+	private static final List<String> ALLOWED_ORIGINS = Arrays.asList(
+	        "http://localhost:4200",
+	        "http://172.16.1.101:4400"
+	);
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
-		HttpHeaders headers = exchange.getResponse().getHeaders();
+	    HttpHeaders headers = exchange.getResponse().getHeaders();
+	    String requestOrigin = exchange.getRequest().getHeaders().getOrigin();
 
-		headers.add("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
-		headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-		headers.set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Channel");
-		headers.add("Access-Control-Allow-Credentials", "true");
-		headers.add("Access-Control-Expose-Headers", "Cookie");
-		headers.add("Strict-Transport-Security", "max-age=36500 ; includeSubDomains ; preload");
-		headers.add("Content-Security-Policy",
-				"default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'");
+	    if (requestOrigin != null && ALLOWED_ORIGINS.contains(requestOrigin)) {
+	        headers.set("Access-Control-Allow-Origin", requestOrigin);
+	    }
 
-		if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
-			exchange.getResponse().setStatusCode(HttpStatus.OK);
-			return exchange.getResponse().setComplete();
-		}
+	    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+	    headers.set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Channel");
+	    headers.set("Access-Control-Allow-Credentials", "true");
+	    headers.set("Access-Control-Expose-Headers", "Cookie");
+	    headers.set("Strict-Transport-Security", "max-age=36500 ; includeSubDomains ; preload");
+	    headers.set("Content-Security-Policy",
+	            "default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'");
 
-		return chain.filter(exchange);
+	    if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+	        exchange.getResponse().setStatusCode(HttpStatus.OK);
+	        return exchange.getResponse().setComplete();
+	    }
+
+	    return chain.filter(exchange);
 	}
 }
