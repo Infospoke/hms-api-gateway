@@ -16,7 +16,8 @@ import org.springframework.web.util.pattern.PathPatternParser;
 public class RouteValidator {
 	private static final Logger LOGGER = LogManager.getLogger(RouteValidator.class);
     public static final List<String> openApiEndpoints = List.of(
-            "/hms/login/user-login");
+            "/hms/login/user-login",
+            "/hms/login/forgot-password");
  
     private  List<PathPattern> pathPatterns;
     public RouteValidator() {
@@ -28,7 +29,7 @@ public class RouteValidator {
     
     public Predicate<ServerHttpRequest> isSecured = request -> {
         PathContainer requestPath = PathContainer.parsePath(request.getURI().getPath());
-        LOGGER.info("Incoming request URI: {}", requestPath); // Log the URI
+        LOGGER.info("Incoming request URI: {}", requestPath);
         return pathPatterns.stream().noneMatch(pattern -> pattern.matches(requestPath));
     };
  
