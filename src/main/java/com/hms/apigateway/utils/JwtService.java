@@ -43,24 +43,4 @@ public class JwtService {
             throw new RuntimeException("JWT token is empty or null");
         }
     }
-
-    public Claims decodeToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    public String extractUsername(String token) {
-        return decodeToken(token).getSubject();
-    }
-
-    public String extractRole(String token) {
-        return decodeToken(token).get("role", String.class);
-    }
-
-    public List<String> extractPermissions(String token) {
-        return decodeToken(token).get("permissions", List.class);
-    }
 }

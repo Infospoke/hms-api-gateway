@@ -23,79 +23,62 @@ import reactor.core.publisher.Mono;
 @Order(0)
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
-    @Autowired
-    private JwtService jwtService;
+	@Autowired
+	private JwtService jwtService;
 
-    public AuthenticationFilter() {
-        super(Config.class);
-    }
+	public AuthenticationFilter() {
+		super(Config.class);
+	}
 
-    @Override
-    public GatewayFilter apply(Config config) {
-        return (exchange, chain) -> {
+	@Override
+	public GatewayFilter apply(Config config) {
+		return (exchange, chain) -> {
 
-        	List<String> publicPaths = List.of(
-        	        "/hms/login/user-login",
-        	        "/hms/login/forgot-password"
-        	        );
+			List<String> publicPaths = List.of("/hms/login/user-login", "/hms/login/forgot-password");
 
-        	String path = exchange.getRequest().getURI().getPath();
+			String path = exchange.getRequest().getURI().getPath();
 
-        	boolean isPublic = publicPaths.stream().anyMatch(path::startsWith);
+			boolean isPublic = publicPaths.stream().anyMatch(path::startsWith);
 
-        	if (isPublic) {
-        	    return chain.filter(exchange);
-        	}
+			if (isPublic) {
+				return chain.filter(exchange);
+			}
 
-            String authHeader = exchange.getRequest()
-                    .getHeaders()
-                    .getFirst(HttpHeaders.AUTHORIZATION);
+			String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Missing or invalid Authorization header", HttpStatus.UNAUTHORIZED);
-            }
+			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+				return onError(exchange, "Missing or invalid Authorization header", HttpStatus.UNAUTHORIZED);
+			}
 
-            String token = authHeader.substring(7);
+			String token = authHeader.substring(7);
 
-            try {
-                jwtService.validateToken(token);
+			try {
+				jwtService.validateToken(token);
+				return chain.filter(exchange);
 
-                Claims claims = jwtService.decodeToken(token);
+			} catch (Exception ex) {
+				return onError(exchange, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+			}
+		};
+	}
 
-                String email = claims.getSubject();
-                List<String> permissions = claims.get("permissions", List.class);
+	private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
 
-                ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                        .header("X-User", email)
-                        .header("X-Permissions", String.join(",", permissions))
-                        .build();
+		exchange.getResponse().setStatusCode(status);
+		exchange.getResponse().getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
 
-                return chain.filter(exchange.mutate().request(modifiedRequest).build());
+		String body = String.format("""
+				{
+				  "status": "FAILURE",
+				  "message": "%s"
+				}
+				""", message);
 
-            } catch (Exception ex) {
-                return onError(exchange, ex.getMessage(), HttpStatus.UNAUTHORIZED);
-            }
-        };
-    }
+		DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
 
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
+		return exchange.getResponse().writeWith(Mono.just(buffer));
+	}
 
-        exchange.getResponse().setStatusCode(status);
-        exchange.getResponse().getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
-
-        String body = String.format("""
-                {
-                  "status": "FAILURE",
-                  "message": "%s"
-                }
-                """, message);
-
-        DataBuffer buffer = exchange.getResponse()
-                .bufferFactory()
-                .wrap(body.getBytes(StandardCharsets.UTF_8));
-
-        return exchange.getResponse().writeWith(Mono.just(buffer));
-    }
-
-    public static class Config {}
+	public static class Config {
+	}
 }
