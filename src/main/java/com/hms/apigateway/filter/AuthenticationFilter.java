@@ -34,7 +34,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
 
-			List<String> publicPaths = List.of("/hms/login/user-login", "/hms/login/forgot-password");
+			List<String> publicPaths = List.of("/hms/login/user-login", "/hms/login/forgot-password", "/hms/notifications");
 
 			String path = exchange.getRequest().getURI().getPath();
 

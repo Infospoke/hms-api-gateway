@@ -20,6 +20,12 @@ public class ChannelValidator implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    	
+    	String path = exchange.getRequest().getURI().getPath();
+    	
+    	if (path.startsWith("/ws")) {
+            return chain.filter(exchange);
+        }
 
         String channel = exchange.getRequest().getHeaders().getFirst("X-Channel");
 
