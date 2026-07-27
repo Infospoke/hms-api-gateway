@@ -35,7 +35,10 @@ public class SecurityConfiguration {
 	            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
 	            .authorizeExchange(exchanges -> exchanges
 	                    .pathMatchers("/hms/login/user-login",
-	                            "/hms/login/forgot-password").permitAll()
+	                            "/hms/login/forgot-password",
+	                            "/hms/candidate/create",
+	                            "/hms/candidate/login",
+	                            "/hms/candidate/forgot-password").permitAll()
 	                    .anyExchange().permitAll()
 	            )
 	            .build();
