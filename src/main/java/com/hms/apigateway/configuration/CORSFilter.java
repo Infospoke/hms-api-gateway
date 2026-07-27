@@ -20,7 +20,9 @@ public class CORSFilter implements WebFilter {
 
     private static final List<String> ALLOWED_ORIGINS = Arrays.asList(
             "http://localhost:4200",
-            "http://172.16.1.101:4400"
+            "http://172.16.1.101:4400",
+            "http://localhost:5173",
+            "http://172.16.1.101:5173"
     );
 
     @Override
